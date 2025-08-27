@@ -1,0 +1,14 @@
+.circular-image-container {
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  position: relative;
+}
+
+.circular-image {
+  border-radius: 50%;
+  object-fit: cover;
+}

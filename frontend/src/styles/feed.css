@@ -1,0 +1,76 @@
+.feed-home {
+  display: flex;
+  display: contents;
+  gap: 2rem;
+  width: 100%;
+  margin-right: 4rem;
+}
+
+.feed-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+.loading-text {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+.no-campaigns {
+  text-align: center;
+  padding: 3rem 2rem;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+}
+
+.no-campaigns p {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+
+
+
+/* Responsive grid layout */
+.campaign-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .campaign-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .campaign-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .feed-home {
+    padding: 2rem 2.5rem;
+  }
+}
+
+/* Ensure proper spacing when FloatingRight is present */
+@media (min-width: 1024px) {
+  .feed-home {
+    padding-right: calc(350px + 2rem); /* Account for FloatingRight width + padding */
+  }
+}
+
+@media (max-width: 1023px) {
+  .feed-home {
+    padding-right: 2rem; /* Normal padding on mobile/tablet */
+  }
+}

@@ -1,0 +1,146 @@
+/* Sidebar container */
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  position: fixed; /* keep it fixed to viewport */
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease-in-out;
+
+  /* Start hidden off-screen */
+  transform: translateX(-280px);
+}
+
+/* Sidebar open state */
+.sidebar-open {
+  transform: translateX(0); /* slide into view */
+}
+
+/* Mobile overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+/* Sidebar header with logo and close button */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-logo-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.sidebar-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #4b5563;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-close:hover {
+  color: #111827;
+  background-color: #f3f4f6;
+}
+
+/* Sidebar links container */
+.sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 0.75rem;
+  flex: 1;
+}
+
+/* Individual sidebar link/button */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: transparent;
+  border: none;
+  text-align: left;
+}
+
+/* Hover effect */
+.sidebar-link:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Active link styling */
+.sidebar-link.active {
+  font-weight: 600;
+  color: #111827;
+  background-color: #e5e7eb;
+  box-shadow: inset 4px 0 0 #6366f1;
+}
+
+/* Responsive styles */
+@media (max-width: 1023px) {
+  .sidebar-overlay {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    position: sticky;
+    left: 0;
+    transform: none;
+    padding-top: 0;
+  }
+  
+  .sidebar-header {
+    padding: 2rem 1.5rem;
+  }
+  
+  .sidebar-close {
+    display: none;
+  }
+  
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  .sidebar-links {
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+  }
+}
