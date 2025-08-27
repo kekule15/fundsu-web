@@ -12,7 +12,7 @@ import { MyCampaignsInternalViews, useSidebar } from "@/context/SidebarContext";
 import type { Campaign } from "@/types/campaign";
 import { lamportsToSol } from "@/utils/converters";
 
-export function MyCampaigns() {
+export default function MyCampaigns() {
   const { loading: authLoading, user, getUserProfile } = useAuth();
 
   if (!user) {

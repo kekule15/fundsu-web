@@ -11,10 +11,11 @@ import "../styles/homepage.css"; // Homepage-specific layout styles
 import { JSX } from "react";
 import { SidebarPage, SidebarPages } from "@/utils/sidebar_utils";
 import { InternalNavBar } from "@/components/InternalNavBar";
-import { Feed } from "./feed/feed";
-import { MyCampaigns } from "./my-campaign/page";
-import { Profile } from "./profile/page";
-import { MyWallet } from "./wallet/page";
+import Feed from "./feed/feed";
+import MyCampaigns from "./my-campaign/page";
+import MyWallet from "./wallet/page";
+import Profile from "./profile/page";
+
 
 export default function HomePage() {
   const { activeItem } = useSidebar();

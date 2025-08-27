@@ -8,7 +8,7 @@ import ConnectWalletComponent from "@/components/ConnectWalletComponent";
 import TransactionView from "./transaction";
 import { useTransactions } from "@/context/TransactionContext";
 
-export function MyWallet() {
+export default function MyWallet() {
   const { campaigns, loading } = useCampaign();
   const { loading: authLoading, user, balance } = useAuth();
 

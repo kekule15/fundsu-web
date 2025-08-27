@@ -10,7 +10,7 @@ import { CircularImage } from "@/components/CircularAvatar";
 import { userAvatarDefault } from "@/utils/media_files";
 import { lamportsToSol } from "@/utils/converters";
 
-export function Profile() {
+export default function Profile() {
   const {
     logout,
     user,

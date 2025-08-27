@@ -8,7 +8,7 @@ import { FeedsInternalViews, useSidebar } from "@/context/SidebarContext";
 import { Campaign } from "@/types/campaign";
 import { useAuth } from "@/context/AuthContext";
 
-export function Feed() {
+export default function Feed() {
   const { user } = useAuth();
 
   const { campaigns, loading, selectCampaign, selectedCampaign, manualSync } =
