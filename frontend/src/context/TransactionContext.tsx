@@ -3,8 +3,9 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Transaction } from "@/types/transaction";
-import { getUserTransactions } from "../lib/transactionHelpers";
+
 import { useAuth } from "./AuthContext";
+import { getUserTransactions } from "@/lib/firebaseHelpers";
 
 type TransactionContextType = {
   transactions: Transaction[];

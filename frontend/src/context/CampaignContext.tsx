@@ -41,10 +41,6 @@ import {
   updateCampaignWithdrawal,
 } from "@/lib/firebaseHelpers";
 import {
-  createCampaignClosedTransaction,
-  createContributionTransaction,
-} from "@/lib/transactionHelpers";
-import {
   CampaignInitializedEvent,
   CampaignContributedEvent,
   CampaignWithdrawnEvent,
