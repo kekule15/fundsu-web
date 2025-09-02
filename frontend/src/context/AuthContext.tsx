@@ -34,6 +34,8 @@ import {
 } from "firebase/auth";
 import { unsubscribe } from "diagnostics_channel";
 import { convertToUserProfile } from "@/lib/firebaseHelpers";
+import { useWalletGeneration } from "./WalletGenerationContext";
+import { getUWalletBalance } from "@/lib/balance";
 
 type AuthContextType = {
   user: UserProfile | null;
@@ -55,14 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [updateUserState, setUpdateUserState] = useState(false);
-  const wallet = useAnchorWallet();
-  const { connection } = useConnection();
-  const { disconnect } = useWallet();
+  // const wallet = useAnchorWallet();
+  // const { connection } = useConnection();
+  // const { disconnect } = useWallet();
+  const { generatedKeypair, clearWalletData } = useWalletGeneration();
 
   // for balance
   const [balance, setBalance] = useState(0);
   useEffect(() => {
-    if (!user?.wallet_address || !connection) {
+    if (!user?.wallet_address || !generatedKeypair) {
       console.log("No user or wallet address, skipping balance fetch");
       return;
     }
@@ -72,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log("Fetching wallet balance for", user.wallet_address);
         const key = new PublicKey(user.wallet_address);
-        const lamports = await connection.getBalance(key);
-        const amount = lamports / LAMPORTS_PER_SOL;
+
+        const amount = await getUserWalletBalance(key.toBase58());
         console.log("Wallet balance:", amount);
         setBalance(amount);
       } catch (error) {
@@ -88,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     interval = setInterval(getWalletBalance, 30_000);
 
     return () => clearInterval(interval);
-  }, [user, connection]);
+  }, [user, generatedKeypair]);
 
   useEffect(() => {
     // Subscribe to Firebase auth state
@@ -107,14 +110,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (wallet && !auth.currentUser) {
-      const walletAddress = wallet.publicKey.toString();
+    if (generatedKeypair && !auth.currentUser) {
+      const walletAddress = generatedKeypair.publicKey.toString();
       checkUserProfile(walletAddress);
     } else {
       setLoading(false);
       setUser(null);
     }
-  }, [wallet]);
+  }, [generatedKeypair]);
 
   const checkUserProfile = async (
     walletAddress: string
@@ -169,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const createUserProfile = async (walletAddress: string) => {
     try {
       const userDoc = doc(db, USER_COLLECTION, walletAddress); // Use wallet address as document ID
-      const balance = await getWalletBalance(walletAddress);
+      const balance = await getUserWalletBalance(walletAddress);
       const newUser: UserProfileWrite = {
         id: walletAddress, // Set id to wallet address
         wallet_address: walletAddress, // Also store wallet address as a field
@@ -216,12 +219,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const getWalletBalance = async (walletAddress: string): Promise<number> => {
+  const getUserWalletBalance = async (
+    walletAddress: string
+  ): Promise<number> => {
     try {
       const key = new PublicKey(walletAddress);
-      const balanceLamports = await connection.getBalance(key);
-      const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-      return balanceSOL;
+      const balance = await getUWalletBalance(key.toBase58());
+      return balance;
     } catch (error) {
       console.error("Error fetching wallet balance:", error);
       throw error;
@@ -284,7 +288,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Disconnect wallet if connected
-      await disconnect();
+      // await disconnect();
+      clearWalletData();
       console.log("Wallet disconnected");
     } catch (error) {
       console.error("Error during logout:", error);

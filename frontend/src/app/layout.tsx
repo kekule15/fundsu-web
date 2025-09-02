@@ -1,9 +1,10 @@
 // src/app/layout.tsx
 import { AuthProvider } from "@/context/AuthContext";
-import { WalletAdapterProvider } from "@/context/WalletAdapterProvider";
+// import { WalletAdapterProvider } from "@/context/WalletAdapterProvider";
 import "../styles/globals.css";
 import AppLayout from "./appLayout";
-import WalletListener from "@/lib/walletListener";
+// import WalletListener from "@/lib/walletListener";
+import { WalletGenerationProvider } from "@/context/WalletGenerationContext";
 
 export default function RootLayout({
   children,
@@ -13,12 +14,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <WalletAdapterProvider>
-          <AuthProvider>
-            <WalletListener />
-            <AppLayout>{children}</AppLayout>
-          </AuthProvider>
-        </WalletAdapterProvider>
+       
+          <WalletGenerationProvider>
+            <AuthProvider>
+              {/* <WalletListener /> */}
+              <AppLayout>{children}</AppLayout>
+            </AuthProvider>
+          </WalletGenerationProvider>
+      
       </body>
     </html>
   );
