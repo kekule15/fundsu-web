@@ -9,29 +9,18 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { Campaign, CampaignWrite } from "@/types/campaign";
+import { Campaign } from "@/types/campaign";
 import {
   collection,
   doc,
   onSnapshot,
   query,
-  orderBy,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  increment,
+  orderBy
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  useAnchorWallet,
-  useConnection,
-  useWallet,
-} from "@solana/wallet-adapter-react";
 import * as anchor from "@coral-xyz/anchor";
-import { Wallet } from "@coral-xyz/anchor";
 
-import { Connection, PublicKey, SystemProgram } from "@solana/web3.js";
+import {PublicKey } from "@solana/web3.js";
 import idl from "../types/idl/fundsu_campaigns.json";
 import {
   convertToCampaign,
@@ -48,17 +37,14 @@ import {
 } from "@/types/anchor_events";
 import {
   solToBN,
-  bnToSol,
-  safeNumberToBN,
   bnToNumber,
 } from "@/utils/converters";
-import { CAMPAIGN_COLLECTION, USER_COLLECTION } from "@/utils/db_constants";
+import { CAMPAIGN_COLLECTION } from "@/utils/db_constants";
 import { useAuth } from "./AuthContext";
 import { getHumanReadableError } from "@/utils/anchorErrorParser";
-import { CampaignAccountWithTransactions } from "@/types/accountSchema";
 import { syncCampaignsWithFirebase } from "@/lib/data-sync";
 import { useWalletGeneration } from "./WalletGenerationContext";
-
+import { createCustomAnchorProvider } from "@/utils/CustomAnchorProvider";
 
 ///
 type CampaignContextType = {
@@ -86,7 +72,11 @@ type CampaignContextType = {
     docId: string,
     title: string
   ) => Promise<string>;
-  withdrawFromCampaign: (campaignPda: string, title: string, amount: number) => Promise<string>;
+  withdrawFromCampaign: (
+    campaignPda: string,
+    title: string,
+    amount: number
+  ) => Promise<string>;
   refreshCampaigns: () => void;
   selectCampaign: (campaign: Campaign) => void;
   refreshCampaign: () => void;
@@ -128,10 +118,8 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   const [withdrawState, setWithdrawState] = useState(false);
 
   // Custom wallet connection logic
-   const { restoreFromSeedPhrase } = useWalletGeneration();
+  const walletGeneration = useWalletGeneration();
 
-  // Hooks must be at top level
-  const { wallet: connectedWallet, connect } = useWallet();
   const { user } = useAuth();
   const getProgram = useCallback(async (): Promise<anchor.Program> => {
     if (!user?.wallet_address) throw new Error("User wallet not available");
@@ -141,61 +129,28 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
       "confirmed"
     );
 
-    // Use the useWallet hook's wallet directly
-
-    if (connectedWallet == null) {
-      console.log("No connected wallet found, attempting to connect...");
-      try {
-        await connect();
-        // Wait a moment for connection to establish
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      } catch (err) {
-        console.error("Wallet connection failed:", err);
-        throw new Error("Failed to connect wallet");
+    // Check if we have a generated keypair
+    if (!walletGeneration.generatedKeypair) {
+      // Try to restore from storage
+      const restoredKeypair = await walletGeneration.restoreFromStorage();
+      if (!restoredKeypair) {
+        throw new Error(
+          "Wallet not connected. Please connect your wallet first."
+        );
       }
     }
-    {
-      console.log("Connected wallet:", connectedWallet);
-    }
 
-    // Create the wallet object that Anchor expects
-
-    const anchorWallet: Wallet = {
-      publicKey: connectedWallet?.adapter.publicKey!,
-      //payer: connectedWallet?.adapter.publicKey!,
-      signTransaction: async <
-        T extends anchor.web3.Transaction | anchor.web3.VersionedTransaction
-      >(
-        tx: T
-      ): Promise<T> => {
-        // @ts-ignore
-        return await connectedWallet?.adapter.signTransaction(tx);
-      },
-      signAllTransactions: async <
-        T extends anchor.web3.Transaction | anchor.web3.VersionedTransaction
-      >(
-        txs: T[]
-      ): Promise<T[]> => {
-        // @ts-ignore
-        return await connectedWallet?.adapter.signAllTransactions(txs);
-      },
-    } as Wallet;
-
-    // Use the connected wallet from useWallet hook
-    const provider = new anchor.AnchorProvider(connection, anchorWallet, {
-      preflightCommitment: "processed",
-    });
-
+    // Create custom anchor provider with our wallet generation context
+    const provider = createCustomAnchorProvider(connection, walletGeneration);
     anchor.setProvider(provider);
 
     const programInstance = new anchor.Program(idl as anchor.Idl, provider);
-    //setProgram(programInstance);
     console.log(
       "Anchor program initialized:",
       programInstance.programId.toString()
     );
     return programInstance;
-  }, [user]);
+  }, [user, walletGeneration]);
 
   // Event handler functions
   const handleCampaignInitialized = useCallback(
@@ -425,12 +380,12 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
       );
       const targetBN = solToBN(targetAmountSol);
       // Log
-      console.log("Initializing campaign with PDA:", campaignPda.toString());
-      console.log("Target amount (BN):", targetBN.toString());
+      // console.log("Initializing campaign with PDA:", campaignPda.toString());
+      // console.log("Target amount (BN):", targetBN.toString());
       // Title
-      console.log("Title:", title);
-      console.log("Description:", description);
-      console.log("Image URL:", imageUrl);
+      // console.log("Title:", title);
+      // console.log("Description:", description);
+      // console.log("Image URL:", imageUrl);
 
       const tx = await programInstance.methods
         .initializeCampaign(title, description, targetBN)
@@ -547,7 +502,11 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   };
 
   // Withdraw
-  const withdrawFromCampaign = async (campaignPda: string, title: string, amount: number): Promise<string> => {
+  const withdrawFromCampaign = async (
+    campaignPda: string,
+    title: string,
+    amount: number
+  ): Promise<string> => {
     const programInstance = await getProgram();
     if (!programInstance || !user?.wallet_address)
       throw new Error("Wallet not connected");
@@ -564,7 +523,13 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
         })
         .rpc({ commitment: "confirmed" });
 
-      await updateCampaignWithdrawal(campaignPda, amount, publicKey.toString(), tx, title);
+      await updateCampaignWithdrawal(
+        campaignPda,
+        amount,
+        publicKey.toString(),
+        tx,
+        title
+      );
       return tx;
     } catch (error) {
       console.error("Error withdrawing from campaign:", error);

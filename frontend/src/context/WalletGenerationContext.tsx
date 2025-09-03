@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, Transaction, VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
 import * as bip39 from 'bip39';
 import { walletDB } from '@/utils/IndexedDBStorage';
 
@@ -18,6 +18,9 @@ interface WalletGenerationContextType {
   restoreFromStorage: () => Promise<Keypair | null>;
   clearWalletData: () => Promise<void>;
   isInitializing: boolean;
+   signTransaction: <T extends Transaction | VersionedTransaction>(transaction: T) => Promise<T>;
+  signAllTransactions: <T extends Transaction | VersionedTransaction>(transactions: T[]) => Promise<T[]>;
+  getPublicKey: () => PublicKey | null;
 }
 
 const WalletGenerationContext = createContext<WalletGenerationContextType | undefined>(undefined);
@@ -119,6 +122,66 @@ export const WalletGenerationProvider: React.FC<{ children: ReactNode }> = ({ ch
     }
   };
 
+   const signTransaction = async <T extends Transaction | VersionedTransaction>(
+    transaction: T
+  ): Promise<T> => {
+    if (!generatedKeypair) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      if (transaction instanceof Transaction) {
+        // Sign legacy transaction
+        transaction.sign(generatedKeypair);
+        return transaction;
+      } else if (transaction instanceof VersionedTransaction) {
+        // Sign versioned transaction
+        transaction.sign([generatedKeypair]);
+        return transaction;
+      } else {
+        throw new Error('Unsupported transaction type');
+      }
+    } catch (error) {
+      console.error('Error signing transaction:', error);
+      throw new Error('Failed to sign transaction');
+    }
+  };
+
+  const signAllTransactions = async <T extends Transaction | VersionedTransaction>(
+    transactions: T[]
+  ): Promise<T[]> => {
+    if (!generatedKeypair) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      const signedTransactions: T[] = [];
+      
+      for (const transaction of transactions) {
+        if (transaction instanceof Transaction) {
+          // Sign legacy transaction
+          transaction.sign(generatedKeypair);
+          signedTransactions.push(transaction);
+        } else if (transaction instanceof VersionedTransaction) {
+          // Sign versioned transaction
+          transaction.sign([generatedKeypair]);
+          signedTransactions.push(transaction);
+        } else {
+          throw new Error('Unsupported transaction type');
+        }
+      }
+      
+      return signedTransactions;
+    } catch (error) {
+      console.error('Error signing transactions:', error);
+      throw new Error('Failed to sign transactions');
+    }
+  };
+
+  const getPublicKey = (): PublicKey | null => {
+    return generatedKeypair ? generatedKeypair.publicKey : null;
+  };
+
   return (
     <WalletGenerationContext.Provider value={{
       seedPhrase,
@@ -131,7 +194,10 @@ export const WalletGenerationProvider: React.FC<{ children: ReactNode }> = ({ ch
       restoreFromSeedPhrase,
       restoreFromStorage,
       clearWalletData,
-      isInitializing
+      isInitializing,
+      signTransaction,
+      signAllTransactions,
+      getPublicKey
     }}>
       {children}
     </WalletGenerationContext.Provider>
