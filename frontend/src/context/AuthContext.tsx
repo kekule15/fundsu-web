@@ -1,4 +1,4 @@
-// src/context/AuthContext.tsx
+// contexts/AuthContext.tsx
 "use client";
 
 import {
@@ -8,6 +8,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { UserProfile, UserProfileWrite } from "@/types/user";
 import {
@@ -20,20 +21,13 @@ import {
   Unsubscribe,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
-import {
-  useAnchorWallet,
-  useConnection,
-  useWallet,
-} from "@solana/wallet-adapter-react";
 import { USER_COLLECTION } from "@/utils/db_constants";
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import {
   browserLocalPersistence,
   setPersistence,
-  signInAnonymously,
   signInWithCustomToken,
 } from "firebase/auth";
-import { unsubscribe } from "diagnostics_channel";
 import { convertToUserProfile } from "@/lib/firebaseHelpers";
 import { useWalletGeneration } from "./WalletGenerationContext";
 import { getUWalletBalance } from "@/lib/balance";
@@ -50,7 +44,8 @@ type AuthContextType = {
   updateUserProfile: (updates: Partial<UserProfileWrite>) => Promise<void>;
   getUserProfile: (walletAddress: string) => Promise<UserProfile | null>;
   refreshInternalUser: () => Promise<UserProfile | null>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  isRestoringSession: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,109 +54,157 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [updateUserState, setUpdateUserState] = useState(false);
-  const { generatedKeypair, clearWalletData } = useWalletGeneration();
+  const [isRestoringSession, setIsRestoringSession] = useState(false);
 
-  // for balance
-  const [balance, setBalance] = useState(0);
+  // Use a ref to track if auth has been initialized
+  const authInitializedRef = useRef(false);
+  const previousGeneratedKeypairRef = useRef<string | null>(null);
+  const initialAuthDoneRef = useRef(false);
+
+  const {
+    generatedKeypair,
+    clearWalletData,
+    isInitializing,
+    isRestoring,
+    silentlyRestoreFromStorage,
+  } = useWalletGeneration();
   const { activeItem } = useSidebar();
+  const [balance, setBalance] = useState(0);
+
+  // Fetch wallet balance
   const fetchWalletBalance = useCallback(async () => {
     if (!user?.wallet_address) {
-      console.log("No user or wallet address, skipping balance fetch");
-      setLoading(false);
+      console.log("No user wallet address, skipping balance fetch");
       return;
     }
-
-    setLoading(true);
 
     try {
       console.log("Fetching wallet balance for", user.wallet_address);
       const key = new PublicKey(user.wallet_address);
-      const amount = await getUserWalletBalance(key.toBase58());
+      const amount = await getUWalletBalance(key.toBase58());
       console.log("Wallet balance:", amount);
       setBalance(amount);
     } catch (err) {
       console.error("Error fetching wallet balance:", err);
-    } finally {
-      setLoading(false);
     }
-  }, [user, generatedKeypair]);
+  }, [user]);
 
   useEffect(() => {
-    // Fetch balance immediately when dependencies change
     fetchWalletBalance();
-  }, [fetchWalletBalance, activeItem]); // activeItem triggers refresh
+  }, [fetchWalletBalance, activeItem]);
 
+  // Effect for initial authentication (runs once)
   useEffect(() => {
-    // Subscribe to Firebase auth state
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        // User already signed in (persisted session survives refresh)
-        const walletAddress = firebaseUser.uid; // since UID == walletAddress
-        await checkUserProfile(walletAddress);
-      } else {
-        setUser(null);
-        setLoading(false);
+    const performInitialAuth = async () => {
+      if (isInitializing || initialAuthDoneRef.current) {
+        return;
       }
-    });
 
-    return () => unsubscribe();
-  }, []);
+      initialAuthDoneRef.current = true;
+      setIsRestoringSession(true);
 
+      try {
+        // First priority: Use existing generated keypair
+        if (generatedKeypair) {
+          const walletAddress = generatedKeypair.publicKey.toString();
+          await checkUserProfile(walletAddress);
+        }
+        // Second priority: Restore from storage if Firebase user exists
+        else if (auth.currentUser) {
+          console.log("Firebase user exists, restoring wallet from storage");
+          const restoredKeypair = await silentlyRestoreFromStorage();
+          if (restoredKeypair) {
+            const walletAddress = restoredKeypair.publicKey.toString();
+            await checkUserProfile(walletAddress);
+          } else {
+            await auth.signOut();
+            setUser(null);
+          }
+        }
+        // No authentication possible
+        else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error during initial authentication:", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+        setIsRestoringSession(false);
+      }
+    };
+
+    performInitialAuth();
+  }, [isInitializing]); // Only depends on isInitializing
+
+  // Separate effect for handling keypair changes after initial auth
   useEffect(() => {
-    if (generatedKeypair && !auth.currentUser) {
-      const walletAddress = generatedKeypair.publicKey.toString();
-      checkUserProfile(walletAddress);
-    } else {
-      setLoading(false);
-      setUser(null);
+    // Only run if initial auth is done and we have a new keypair
+    if (!initialAuthDoneRef.current || !generatedKeypair) {
+      return;
     }
+
+    const handleKeypairChange = async () => {
+      setIsRestoringSession(true);
+      try {
+        const walletAddress = generatedKeypair.publicKey.toString();
+        await checkUserProfile(walletAddress);
+      } catch (error) {
+        console.error("Error handling keypair change:", error);
+      } finally {
+        setIsRestoringSession(false);
+      }
+    };
+
+    handleKeypairChange();
   }, [generatedKeypair]);
 
-  const checkUserProfile = async (
-    walletAddress: string
-  ): Promise<void | Unsubscribe> => {
+  const checkUserProfile = async (walletAddress: string): Promise<void> => {
     console.log("Checking user profile for wallet:", walletAddress);
+
     try {
       setLoading(true);
-      // Step 1: Ensure signed in with wallet UID
+
+      // Ensure signed in with wallet UID
       if (!auth.currentUser || auth.currentUser.uid !== walletAddress) {
         console.log("User needs to sign in with wallet UID");
-        // fetch custom token from backend
+
+        // Fetch custom token from backend
         const res = await fetch("/api/get-firebase-token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ walletAddress }),
         });
-        const { token } = await res.json();
 
+        if (!res.ok) {
+          throw new Error(`Failed to get Firebase token: ${res.status}`);
+        }
+
+        const { token } = await res.json();
         await setPersistence(auth, browserLocalPersistence);
         await signInWithCustomToken(auth, token);
         console.log("Signed in with wallet UID:", auth.currentUser?.uid);
       }
+
       console.log("Proceeding to check/create user profile");
-      const userDoc = doc(db, USER_COLLECTION, walletAddress); // Use wallet address as document ID
+      const userDoc = doc(db, USER_COLLECTION, walletAddress);
+
+      // Check if user document exists (no realtime listener)
       const docSnap = await getDoc(userDoc);
 
       if (docSnap.exists()) {
-        // User exists, set user data
         const userData = convertToUserProfile(docSnap.id, docSnap.data());
         setUser(userData);
 
-        // Set up real-time listener
-        const unsubscribe = onSnapshot(userDoc, (doc) => {
-          if (doc.exists()) {
-            const updatedUser = convertToUserProfile(doc.id, doc.data());
-            setUser(updatedUser);
-          }
-        });
-
-        return () => unsubscribe();
+        // Update balance
+        await fetchWalletBalance();
       } else {
         // User does not exist, create new profile
         await createUserProfile(walletAddress);
       }
     } catch (error) {
       console.error("Error checking user profile:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -169,11 +212,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const createUserProfile = async (walletAddress: string) => {
     try {
-      const userDoc = doc(db, USER_COLLECTION, walletAddress); // Use wallet address as document ID
-      const balance = await getUserWalletBalance(walletAddress);
+      const userDoc = doc(db, USER_COLLECTION, walletAddress);
+      const balance = await getUWalletBalance(walletAddress);
+
       const newUser: UserProfileWrite = {
-        id: walletAddress, // Set id to wallet address
-        wallet_address: walletAddress, // Also store wallet address as a field
+        id: walletAddress,
+        wallet_address: walletAddress,
         name: `User_${walletAddress.slice(0, 8)}`,
         date_created: serverTimestamp(),
         profile_url: "",
@@ -191,46 +235,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setDoc(userDoc, newUser);
 
       // Set temporary user data for immediate UI update
-      const dNewUser: UserProfile = {
+      const tempUser: UserProfile = {
         ...newUser,
         date_created: Math.floor(Date.now() / 1000),
-      };
-      setUser(dNewUser);
+      } as UserProfile;
+
+      setUser(tempUser);
     } catch (error) {
       console.error("Error creating user profile:", error);
+      throw error;
     }
   };
 
   const updateUserProfile = async (updates: Partial<UserProfileWrite>) => {
     if (!user) return;
+
     setUpdateUserState(true);
     try {
-      const userDoc = doc(db, USER_COLLECTION, user.id); // Use user.id (which is the wallet address)
-      await updateDoc(userDoc, updates).then(() => {
-        setUpdateUserState(false);
-      });
+      const userDoc = doc(db, USER_COLLECTION, user.id);
+      await updateDoc(userDoc, updates);
     } catch (error) {
-      setUpdateUserState(false);
       console.error("Error updating user profile:", error);
+      throw error;
     } finally {
       setUpdateUserState(false);
     }
   };
 
-  const getUserWalletBalance = async (
-    walletAddress: string
-  ): Promise<number> => {
-    try {
-      const key = new PublicKey(walletAddress);
-      const balance = await getUWalletBalance(key.toBase58());
-      return balance;
-    } catch (error) {
-      console.error("Error fetching wallet balance:", error);
-      throw error;
-    }
-  };
-
-  // Get user profile by wallet address
   const getUserProfile = async (
     walletAddress: string
   ): Promise<UserProfile | null> => {
@@ -239,32 +270,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const docSnap = await getDoc(userDoc);
 
       if (docSnap.exists()) {
-        const userData = convertToUserProfile(docSnap.id, docSnap.data());
-        console.log("Fetched external user profile:", userData);
-
-        return userData;
-      } else {
-        return null;
+        return convertToUserProfile(docSnap.id, docSnap.data());
       }
+
+      return null;
     } catch (error) {
       console.error("Error getting user profile:", error);
-
       return null;
     }
   };
 
   const refreshInternalUser = async (): Promise<UserProfile | null> => {
     if (!user) return null;
+
     try {
       setLoading(true);
-      const userDoc = doc(db, USER_COLLECTION, user.wallet_address);
-      const docSnap = await getDoc(userDoc);
+      const userData = await getUserProfile(user.wallet_address);
 
-      if (docSnap.exists()) {
-        const userData = convertToUserProfile(docSnap.id, docSnap.data());
+      if (userData) {
         setUser(userData);
         return userData;
       }
+
       return null;
     } catch (error) {
       console.error("Error refreshing internal user profile:", error);
@@ -276,8 +303,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      // Clear local state
-      setUser(null);
+      // Clear wallet data first
+      await clearWalletData();
 
       // Firebase logout
       if (auth.currentUser) {
@@ -285,18 +312,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("Firebase user signed out");
       }
 
-      // Disconnect wallet if connected
-      // await disconnect();
-      clearWalletData();
-      console.log("Wallet disconnected");
+      // Clear local state
+      setUser(null);
+      setBalance(0);
+
+      console.log("User logged out successfully");
     } catch (error) {
       console.error("Error during logout:", error);
+      throw error;
     }
   };
 
   const value: AuthContextType = {
     user,
-    loading,
+    loading: loading || isInitializing || isRestoring || isRestoringSession,
     updateUserState,
     isAuthenticated: !!user,
     balance,
@@ -306,6 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getUserProfile,
     refreshInternalUser,
     logout,
+    isRestoringSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -314,7 +344,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error("useAuth should be used within AuthProvider");
   }
   return context;
 }

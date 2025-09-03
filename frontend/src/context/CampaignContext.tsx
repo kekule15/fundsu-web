@@ -15,12 +15,12 @@ import {
   doc,
   onSnapshot,
   query,
-  orderBy
+  orderBy,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import * as anchor from "@coral-xyz/anchor";
 
-import {PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import idl from "../types/idl/fundsu_campaigns.json";
 import {
   convertToCampaign,
@@ -35,10 +35,7 @@ import {
   CampaignWithdrawnEvent,
   CampaignClosedEvent,
 } from "@/types/anchor_events";
-import {
-  solToBN,
-  bnToNumber,
-} from "@/utils/converters";
+import { solToBN, bnToNumber } from "@/utils/converters";
 import { CAMPAIGN_COLLECTION } from "@/utils/db_constants";
 import { useAuth } from "./AuthContext";
 import { getHumanReadableError } from "@/utils/anchorErrorParser";
@@ -133,11 +130,11 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     if (!walletGeneration.generatedKeypair) {
       // Try to restore from storage
       const restoredKeypair = await walletGeneration.restoreFromStorage();
-      if (!restoredKeypair) {
-        throw new Error(
-          "Wallet not connected. Please connect your wallet first."
-        );
-      }
+      // if (!restoredKeypair) {
+      //   throw new Error(
+      //     "Wallet not connected. Please connect your wallet first."
+      //   );
+      // }
     }
 
     // Create custom anchor provider with our wallet generation context
@@ -150,7 +147,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
       programInstance.programId.toString()
     );
     return programInstance;
-  }, [user, walletGeneration]);
+  }, [walletGeneration]);
 
   // Event handler functions
   const handleCampaignInitialized = useCallback(
@@ -448,8 +445,10 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     title: string
   ): Promise<string> => {
     const programInstance = await getProgram();
-    if (!programInstance || !user?.wallet_address)
+    console.log("Program Instance:", programInstance);
+    if (!programInstance || !user) {
       throw new Error("Wallet not connected");
+    }
 
     try {
       setContribute(true);

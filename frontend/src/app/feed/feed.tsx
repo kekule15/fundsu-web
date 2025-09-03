@@ -7,6 +7,7 @@ import { useCampaign } from "@/context/CampaignContext";
 import { FeedsInternalViews, useSidebar } from "@/context/SidebarContext";
 import { Campaign } from "@/types/campaign";
 import { useAuth } from "@/context/AuthContext";
+import { useWalletGeneration } from "@/context/WalletGenerationContext";
 
 export default function Feed() {
   const { user } = useAuth();
@@ -15,12 +16,16 @@ export default function Feed() {
     useCampaign();
   const { internalView, navigateToInternalView, goBack } = useSidebar();
 
+  const { restoreFromStorage, silentlyRestoreFromStorage } =
+    useWalletGeneration();
+
   // Filter campaigns to only show locked ones (target not met yet)
   const lockedCampaigns = campaigns.filter(
     (campaign) => campaign.locked === true
   );
 
   const handleCampaignClick = async (campaign: any) => {
+    // await silentlyRestoreFromStorage();
     // let result = await manualSync();
     // console.log("Manual sync result:", result);
     selectCampaign(campaign);

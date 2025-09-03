@@ -14,16 +14,16 @@ export default function ConnectWalletComponent() {
   const [isConfirming, setIsConfirming] = useState(false);
   const { isConfirmed } = useWalletGeneration();
 
-  if (isConfirmed) {
-    return (
-      <div className="connect-wallet-container">
-        <div className="wallet-connected">
-          <h2>Wallet Connected Successfully!</h2>
-          <p>You can now use all features of the platform.</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isConfirmed) {
+  //   return (
+  //     <div className="connect-wallet-container">
+  //       <div className="wallet-connected">
+  //         <h2>Wallet Connected Successfully!</h2>
+  //         <p>You can now use all features of the platform.</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (isConfirming) {
     return <ConfirmSeedPhrase onBack={() => setIsConfirming(false)} />;

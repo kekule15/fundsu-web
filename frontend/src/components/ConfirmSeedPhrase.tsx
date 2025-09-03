@@ -51,6 +51,7 @@ export default function ConfirmSeedPhrase({ onBack }: ConfirmSeedPhraseProps) {
 
     // If all words are correct, restore the wallet
     try {
+      console.log("Restoring wallet from seed phrase:", seedPhrase);
       await restoreFromSeedPhrase(seedPhrase);
     } catch (err) {
       setError('Failed to restore wallet. Please try again.');

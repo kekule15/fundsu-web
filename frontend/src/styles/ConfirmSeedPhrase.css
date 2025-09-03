@@ -67,7 +67,7 @@
 
 .verification-word-input input:focus {
   outline: none;
-  border-color: #14f195;
+  border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(20, 241, 149, 0.15);
 }
 
@@ -85,8 +85,8 @@
 .verify-button {
   width: 100%;
   padding: 1rem;
-  background: #14f195;
-  color: #000;
+   background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -97,7 +97,7 @@
 }
 
 .verify-button:hover {
-  background: #12d985;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(20, 241, 149, 0.25);
 }
