@@ -41,7 +41,9 @@
 .campaign-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.8rem;
+  margin-bottom: 2rem;
+  
 }
 
 @media (min-width: 640px) {
@@ -53,6 +55,7 @@
 @media (min-width: 1024px) {
   .campaign-grid {
     grid-template-columns: repeat(3, 1fr);
+    margin-right: 4rem;
   }
 }
 
@@ -60,6 +63,7 @@
   .feed-home {
     padding: 2rem 2.5rem;
   }
+ 
 }
 
 /* Ensure proper spacing when FloatingRight is present */
@@ -72,5 +76,8 @@
 @media (max-width: 1023px) {
   .feed-home {
     padding-right: 2rem; /* Normal padding on mobile/tablet */
+  }
+  .campaign-grid{
+    margin-right: 0; /* Remove right margin on smaller screens */
   }
 }

@@ -24,6 +24,11 @@ export default function Feed() {
     (campaign) => campaign.locked === true
   );
 
+  // Closed campaigns
+  const closedCampaigns = campaigns.filter(
+    (campaign) => campaign.locked === false
+  );
+
   const handleCampaignClick = async (campaign: any) => {
     // await silentlyRestoreFromStorage();
     // let result = await manualSync();
@@ -50,11 +55,26 @@ export default function Feed() {
             </div>
           )}
           <div className="feed-home">
-            {lockedCampaigns.length > 0 && (
-              <section>
-                <h1 className="feed-title">All Campaigns</h1>
+            <section>
+              <h1 className="feed-title">Ongoing Campaigns</h1>
+              <div className="campaign-grid">
+                {lockedCampaigns.map((c) => (
+                  <div
+                    key={c.id}
+                    onClick={async () => {
+                      handleCampaignClick(c);
+                    }}
+                  >
+                    <CampaignCard campaign={c} />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+             <section>
+                <h1 className="feed-title">Closed Campaigns</h1>
                 <div className="campaign-grid">
-                  {lockedCampaigns.map((c) => (
+                  {closedCampaigns.map((c) => (
                     <div
                       key={c.id}
                       onClick={async () => {
@@ -66,7 +86,6 @@ export default function Feed() {
                   ))}
                 </div>
               </section>
-            )}
           </div>
         </>
       )}

@@ -44,9 +44,9 @@ export default function CreateCampaign({ onBack }: Props) {
     } catch (err) {
       console.error("Error creating campaign:", err);
       alert(`${err}.`);
-    } finally{
+    } finally {
       // Manually sync data after a successful contribution
-          await manualSync();
+      await manualSync();
     }
   };
 
@@ -86,11 +86,7 @@ export default function CreateCampaign({ onBack }: Props) {
                 value={targetAmount}
                 placeholder="0.0001"
                 onChange={(e) => {
-                  if (e.target.value === "0" || e.target.value === "") {
-                    // setTargetAmount(0);
-                  } else {
-                    setTargetAmount(e.target.value);
-                  }
+                  setTargetAmount(e.target.value);
                 }}
                 required
               />

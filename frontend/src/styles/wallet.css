@@ -37,17 +37,44 @@
   text-align: center;
 }
 
-.wallet-address,
-.wallet-balance {
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: #374151;
+.wallet-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.wallet-address .label,
-.wallet-balance .label {
-  font-weight: 600;
+.detail-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.wallet-address-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wallet-address {
+  font-family: monospace;
   color: #111827;
+  margin-top: 0.4rem;
+}
+
+.copy-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: #e5e7eb;
 }
 
 .wallet-buttons {
