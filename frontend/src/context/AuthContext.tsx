@@ -7,6 +7,7 @@ import {
   useEffect,
   useState,
   ReactNode,
+  useCallback,
 } from "react";
 import { UserProfile, UserProfileWrite } from "@/types/user";
 import {
@@ -36,6 +37,7 @@ import { unsubscribe } from "diagnostics_channel";
 import { convertToUserProfile } from "@/lib/firebaseHelpers";
 import { useWalletGeneration } from "./WalletGenerationContext";
 import { getUWalletBalance } from "@/lib/balance";
+import { useSidebar } from "./SidebarContext";
 
 type AuthContextType = {
   user: UserProfile | null;
@@ -57,41 +59,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [updateUserState, setUpdateUserState] = useState(false);
-  // const wallet = useAnchorWallet();
-  // const { connection } = useConnection();
-  // const { disconnect } = useWallet();
   const { generatedKeypair, clearWalletData } = useWalletGeneration();
 
   // for balance
   const [balance, setBalance] = useState(0);
-  useEffect(() => {
-    if (!user?.wallet_address || !generatedKeypair) {
+  const { activeItem } = useSidebar();
+  const fetchWalletBalance = useCallback(async () => {
+    if (!user?.wallet_address) {
       console.log("No user or wallet address, skipping balance fetch");
+      setLoading(false);
       return;
     }
-    let interval: NodeJS.Timeout;
-    // Get the wallet balance
-    const getWalletBalance = async () => {
-      try {
-        console.log("Fetching wallet balance for", user.wallet_address);
-        const key = new PublicKey(user.wallet_address);
 
-        const amount = await getUserWalletBalance(key.toBase58());
-        console.log("Wallet balance:", amount);
-        setBalance(amount);
-      } catch (error) {
-        console.error("Error fetching wallet balance:", error);
-      }
-    };
+    setLoading(true);
 
-    // fetch immediately
-    getWalletBalance();
-
-    // refresh every 30s
-    interval = setInterval(getWalletBalance, 30_000);
-
-    return () => clearInterval(interval);
+    try {
+      console.log("Fetching wallet balance for", user.wallet_address);
+      const key = new PublicKey(user.wallet_address);
+      const amount = await getUserWalletBalance(key.toBase58());
+      console.log("Wallet balance:", amount);
+      setBalance(amount);
+    } catch (err) {
+      console.error("Error fetching wallet balance:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [user, generatedKeypair]);
+
+  useEffect(() => {
+    // Fetch balance immediately when dependencies change
+    fetchWalletBalance();
+  }, [fetchWalletBalance, activeItem]); // activeItem triggers refresh
 
   useEffect(() => {
     // Subscribe to Firebase auth state

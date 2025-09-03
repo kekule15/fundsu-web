@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <CampaignProvider>
       <TransactionProvider>
-        <SidebarProvider>
+       
           <div className="layout-container">
             <Navbar />
             <div className="layout-main">
@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <main className="main-content">{children}</main>
             </div>
           </div>
-        </SidebarProvider>
+        
       </TransactionProvider>
     </CampaignProvider>
   );

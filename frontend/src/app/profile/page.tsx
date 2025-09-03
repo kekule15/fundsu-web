@@ -68,11 +68,14 @@ export default function Profile() {
         console.log("Profile updated successfully");
         setEditedUser({ ...editedUser });
         await refreshInternalUser();
+      }).then(() => {
+        setIsEditing(false);
       });
     } catch (error) {
       console.error("Failed to update profile:", error);
       // Handle error (show message to user)
     } finally {
+
       setIsSaving(false);
     }
   };

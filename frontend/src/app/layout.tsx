@@ -5,6 +5,7 @@ import "../styles/globals.css";
 import AppLayout from "./appLayout";
 // import WalletListener from "@/lib/walletListener";
 import { WalletGenerationProvider } from "@/context/WalletGenerationContext";
+import { SidebarProvider } from "@/context/SidebarContext";
 
 export default function RootLayout({
   children,
@@ -14,14 +15,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-       
+        <SidebarProvider>
           <WalletGenerationProvider>
             <AuthProvider>
               {/* <WalletListener /> */}
               <AppLayout>{children}</AppLayout>
             </AuthProvider>
           </WalletGenerationProvider>
-      
+        </SidebarProvider>
       </body>
     </html>
   );
