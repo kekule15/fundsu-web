@@ -5,7 +5,6 @@ import { SidebarProvider } from "@/context/SidebarContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CampaignProvider } from "@/context/CampaignContext";
 import { TransactionProvider } from "@/context/TransactionContext";
-import { WalletAdapterProvider } from "@/context/WalletAdapterProvider";
 import "../styles/globals.css";
 import "../styles/layout.css";
 import { Navbar } from "@/components/Navbar";

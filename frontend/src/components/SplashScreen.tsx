@@ -11,8 +11,8 @@ export function SplashScreen() {
       <Image
         src={logoText}
         alt="FundsU Logo"
-        width={210}
-        height={100}
+        width={140}
+        height={48}
         className="splash-text"
         priority
       />

@@ -47,12 +47,6 @@ import {
   CampaignClosedEvent,
 } from "@/types/anchor_events";
 import {
-  fetchCampaignContributions,
-  getContributionStats,
-  mapDecodedCampaign,
-  subscribeToAllCampaignEvents,
-} from "@/lib/anchorHelpers";
-import {
   solToBN,
   bnToSol,
   safeNumberToBN,
@@ -61,10 +55,12 @@ import {
 import { CAMPAIGN_COLLECTION, USER_COLLECTION } from "@/utils/db_constants";
 import { useAuth } from "./AuthContext";
 import { getHumanReadableError } from "@/utils/anchorErrorParser";
-import * as borsh from "borsh";
 import { CampaignAccountWithTransactions } from "@/types/accountSchema";
 import { syncCampaignsWithFirebase } from "@/lib/data-sync";
-import { s } from "framer-motion/client";
+import { useWalletGeneration } from "./WalletGenerationContext";
+
+
+///
 type CampaignContextType = {
   campaigns: Campaign[];
   userCampaigns: Campaign[];
@@ -130,6 +126,9 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   const [selectCampaignState, setSelectCampaignState] = useState(false);
   const [syncState, setSyncState] = useState(false);
   const [withdrawState, setWithdrawState] = useState(false);
+
+  // Custom wallet connection logic
+   const { restoreFromSeedPhrase } = useWalletGeneration();
 
   // Hooks must be at top level
   const { wallet: connectedWallet, connect } = useWallet();
