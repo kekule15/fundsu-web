@@ -19,9 +19,11 @@ import {
   onSnapshot,
   serverTimestamp,
   Unsubscribe,
+  query,
+  orderBy,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
-import { USER_COLLECTION } from "@/utils/db_constants";
+import { CAMPAIGN_COLLECTION, USER_COLLECTION } from "@/utils/db_constants";
 import { PublicKey } from "@solana/web3.js";
 import {
   browserLocalPersistence,
@@ -57,9 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isRestoringSession, setIsRestoringSession] = useState(false);
 
   // Use a ref to track if auth has been initialized
-  const authInitializedRef = useRef(false);
-  const previousGeneratedKeypairRef = useRef<string | null>(null);
+
   const initialAuthDoneRef = useRef(false);
+
+   // Ref to track Firebase listener unsubscribe function
+  const userListenerUnsubscribe = useRef<Unsubscribe | null>(null);
 
   const {
     generatedKeypair,
@@ -158,6 +162,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     handleKeypairChange();
   }, [generatedKeypair]);
+
+
+    // Set up real-time listener for user data changes
+  useEffect(() => {
+    if (!user?.wallet_address) {
+      // Clean up previous listener if user logs out
+      if (userListenerUnsubscribe.current) {
+        userListenerUnsubscribe.current();
+        userListenerUnsubscribe.current = null;
+      }
+      return;
+    }
+
+    console.log("Setting up real-time listener for user:", user.wallet_address);
+    
+    const userDoc = doc(db, USER_COLLECTION, user.wallet_address);
+    
+    // Set up real-time listener for user document
+    userListenerUnsubscribe.current = onSnapshot(userDoc, 
+      async (doc) => {
+        if (doc.exists()) {
+          console.log("User data updated in real-time");
+          const userData = convertToUserProfile(doc.id, doc.data());
+          setUser(userData);
+          
+          // Update balance when user data changes
+         // await fetchWalletBalance();
+        } else {
+          console.warn("User document no longer exists");
+          // User document was deleted, handle accordingly
+          //setUser(null);
+        }
+      },
+      (error) => {
+        console.error("Error in user real-time listener:", error);
+      }
+    );
+
+    // Cleanup function to unsubscribe from listener
+    return () => {
+      if (userListenerUnsubscribe.current) {
+        userListenerUnsubscribe.current();
+        userListenerUnsubscribe.current = null;
+      }
+    };
+  }, [user?.wallet_address]);
+
+
 
   const checkUserProfile = async (walletAddress: string): Promise<void> => {
     console.log("Checking user profile for wallet:", walletAddress);

@@ -130,11 +130,11 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     if (!walletGeneration.generatedKeypair) {
       // Try to restore from storage
       const restoredKeypair = await walletGeneration.restoreFromStorage();
-      // if (!restoredKeypair) {
-      //   throw new Error(
-      //     "Wallet not connected. Please connect your wallet first."
-      //   );
-      // }
+      if (!restoredKeypair) {
+        throw new Error(
+          "Wallet not connected. Please connect your wallet first."
+        );
+      }
     }
 
     // Create custom anchor provider with our wallet generation context
@@ -632,6 +632,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
 
   // Manual sync function
   const manualSync = async (): Promise<any> => {
+    console.error("Manual sync started...");
     setSyncState(true);
     try {
       const result = await syncCampaignsWithFirebase();
