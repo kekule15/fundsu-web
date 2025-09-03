@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Keypair } from '@solana/web3.js';
 import * as bip39 from 'bip39';
+import { walletDB } from '@/utils/IndexedDBStorage';
 
 interface WalletGenerationContextType {
   seedPhrase: string[];
@@ -14,8 +15,9 @@ interface WalletGenerationContextType {
   setIsConfirmed: (confirmed: boolean) => void;
   generateNewSeedPhrase: () => void;
   restoreFromSeedPhrase: (phrase: string[]) => Promise<Keypair>;
-  clearWalletData: () => void;
-  isMobile: boolean;
+  restoreFromStorage: () => Promise<Keypair | null>;
+  clearWalletData: () => Promise<void>;
+  isInitializing: boolean;
 }
 
 const WalletGenerationContext = createContext<WalletGenerationContextType | undefined>(undefined);
@@ -24,7 +26,29 @@ export const WalletGenerationProvider: React.FC<{ children: ReactNode }> = ({ ch
   const [seedPhrase, setSeedPhrase] = useState<string[]>([]);
   const [generatedKeypair, setGeneratedKeypair] = useState<Keypair | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Initialize IndexedDB
+  useEffect(() => {
+    const initializeDB = async () => {
+      try {
+        await walletDB.init();
+        
+        // Check if we have existing wallet data
+        const storedSeedPhrase = await walletDB.getItem('seedPhrase');
+        if (storedSeedPhrase && Array.isArray(storedSeedPhrase)) {
+          setSeedPhrase(storedSeedPhrase);
+          // Don't automatically restore here - let the component decide when to call restoreFromStorage
+        }
+      } catch (error) {
+        console.error('Error initializing IndexedDB:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeDB();
+  }, []);
 
   const generateNewSeedPhrase = () => {
     const mnemonic = bip39.generateMnemonic();
@@ -48,11 +72,9 @@ export const WalletGenerationProvider: React.FC<{ children: ReactNode }> = ({ ch
       setGeneratedKeypair(keypair);
       setIsConfirmed(true);
       
-      // Store in localStorage or IndexedDB
-      localStorage.setItem('walletData', JSON.stringify({
-        seedPhrase: phrase,
-        publicKey: keypair.publicKey.toBase58()
-      }));
+      // Store in IndexedDB
+      await walletDB.setItem('seedPhrase', phrase);
+      await walletDB.setItem('publicKey', keypair.publicKey.toBase58());
       
       return keypair;
     } catch (error) {
@@ -61,41 +83,41 @@ export const WalletGenerationProvider: React.FC<{ children: ReactNode }> = ({ ch
     }
   };
 
-  const clearWalletData = () => {
-    setSeedPhrase([]);
-    setGeneratedKeypair(null);
-    setIsConfirmed(false);
-    localStorage.removeItem('walletData');
-  };
-
-  useEffect(() => {
-  const checkIsMobile = () => {
-    setIsMobile(window.innerWidth < 768);
-  };
-  
-  checkIsMobile();
-  window.addEventListener('resize', checkIsMobile);
-  
-  return () => {
-    window.removeEventListener('resize', checkIsMobile);
-  };
-}, []);
-
-  // Check for existing wallet data on mount
-  useEffect(() => {
-    const storedData = localStorage.getItem('walletData');
-    if (storedData) {
-      try {
-        const { seedPhrase: storedSeedPhrase } = JSON.parse(storedData);
-        if (storedSeedPhrase && Array.isArray(storedSeedPhrase)) {
-          setSeedPhrase(storedSeedPhrase);
-          restoreFromSeedPhrase(storedSeedPhrase);
-        }
-      } catch (error) {
-        console.error('Error parsing stored wallet data:', error);
+  const restoreFromStorage = async (): Promise<Keypair | null> => {
+    try {
+      // Check if we have seed phrase in storage
+      const storedSeedPhrase = await walletDB.getItem('seedPhrase');
+      
+      if (!storedSeedPhrase || !Array.isArray(storedSeedPhrase)) {
+        // No wallet data found in storage
+        return null;
       }
+      
+      // Restore from the stored seed phrase
+      const keypair = await restoreFromSeedPhrase(storedSeedPhrase);
+      return keypair;
+    } catch (error) {
+      console.error('Error restoring from storage:', error);
+      
+      // If there's an error, clear the corrupted data
+      await clearWalletData();
+      return null;
     }
-  }, []);
+  };
+
+  const clearWalletData = async (): Promise<void> => {
+    try {
+      setSeedPhrase([]);
+      setGeneratedKeypair(null);
+      setIsConfirmed(false);
+      
+      // Clear IndexedDB storage
+      await walletDB.removeItem('seedPhrase');
+      await walletDB.removeItem('publicKey');
+    } catch (error) {
+      console.error('Error clearing wallet data:', error);
+    }
+  };
 
   return (
     <WalletGenerationContext.Provider value={{
@@ -107,8 +129,9 @@ export const WalletGenerationProvider: React.FC<{ children: ReactNode }> = ({ ch
       setIsConfirmed,
       generateNewSeedPhrase,
       restoreFromSeedPhrase,
+      restoreFromStorage,
       clearWalletData,
-      isMobile
+      isInitializing
     }}>
       {children}
     </WalletGenerationContext.Provider>
