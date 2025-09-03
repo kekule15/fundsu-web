@@ -27,6 +27,7 @@ export default function TransactionView({ transactions }: TransactionViewProps) 
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
+
   useEffect(() => {
     const fetchProfiles = async () => {
       const uniqueUserIds = new Set<string>();
@@ -56,11 +57,11 @@ export default function TransactionView({ transactions }: TransactionViewProps) 
   }, [transactions, user?.wallet_address, getUserProfile]);
 
   // Only show transactions where the current user is involved
-  const filteredTransactions = transactions.filter(
-    (tx) =>
-      user &&
-      (tx.user_id === user.wallet_address || tx.recipient_user_id === user.wallet_address)
-  );
+  // const filteredTransactions = transactions.filter(
+  //   (tx) =>
+  //     user &&
+  //     (tx.user_id === user.wallet_address || tx.recipient_user_id === user.wallet_address)
+  // );
 
   const getIcon = (type: TransactionType) => {
     switch (type) {
@@ -128,10 +129,10 @@ export default function TransactionView({ transactions }: TransactionViewProps) 
 
   return (
     <div className="transaction-list">
-      {filteredTransactions.length === 0 ? (
+      {transactions.length === 0 ? (
         <p className="empty-text">No transactions yet.</p>
       ) : (
-        filteredTransactions.map((tx) => {
+        transactions.map((tx) => {
           const initiator =
             tx.user_id === user.wallet_address
               ? "You"

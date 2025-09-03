@@ -136,6 +136,8 @@ export default function CampaignDetails() {
     (tx) => tx.campaign_id === campaign.campaign_wallet_key
   );
 
+ 
+
   return (
     <div className="campaign-details">
       {/* Support Dialog */}
@@ -374,7 +376,7 @@ export default function CampaignDetails() {
             <button
               className="connect-wallet-btn"
               onClick={() => {
-                setActiveItem(SidebarPages.PROFILE);
+                setActiveItem(SidebarPages.WALLET);
               }}
             >
               Please connect wallet to Interact

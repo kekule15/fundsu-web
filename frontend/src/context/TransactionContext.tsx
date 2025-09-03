@@ -1,11 +1,26 @@
 // src/context/TransactionContext.tsx
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { Transaction } from "@/types/transaction";
 
 import { useAuth } from "./AuthContext";
-import { getUserTransactions } from "@/lib/firebaseHelpers";
+import {
+  convertToCampaign,
+  convertToTransaction,
+  getAllTransactions,
+  getUserTransactions,
+} from "@/lib/firebaseHelpers";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { TRANSACTION_COLLECTION } from "@/utils/db_constants";
+import { db } from "@/lib/firebase";
+import { Campaign } from "@/types/campaign";
 
 type TransactionContextType = {
   transactions: Transaction[];
@@ -13,33 +28,75 @@ type TransactionContextType = {
   refreshTransactions: () => void;
 };
 
-const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
+const TransactionContext = createContext<TransactionContextType | undefined>(
+  undefined
+);
 
 export function TransactionProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      setTransactions([]);
-      setLoading(false);
-      return;
-    }
+  //  useEffect(() => {
+  //     if (!user) {
+  //       setTransactions([]);
+  //       setLoading(false);
+  //       return;
+  //     }
 
-    const unsubscribe = getUserTransactions(user.id, (transactionsData) => {
-      // Convert Firestore data to Transaction objects
-      const formattedTransactions = transactionsData.map((tx: any) => ({
-        ...tx,
-        date: tx.date?.toMillis ? Math.floor(tx.date.toMillis() / 1000) : tx.date
-      })) as Transaction[];
-      
-      setTransactions(formattedTransactions);
+  //     setLoading(true);
+
+  //     try {
+  //       const transactionsRef = collection(db, TRANSACTION_COLLECTION);
+
+  //       // Create a query that orders transactions by date descending
+  //       const q = query(transactionsRef, orderBy("date", "desc"));
+
+  //       // Set up real-time listener
+  //       const unsubscribe = onSnapshot(q,
+  //         (querySnapshot) => {
+  //           const transactionsData: Transaction[] = [];
+
+  //           querySnapshot.forEach((doc) => {
+  //             transactionsData.push(convertToTransaction(doc.id, doc.data()));
+  //           });
+
+  //           console.log("Fetched transactions:", transactionsData);
+
+  //           setTransactions(transactionsData);
+  //           setLoading(false);
+  //         },
+  //         (error) => {
+  //           console.error("Error listening to transactions:", error);
+  //           setLoading(false);
+  //         }
+  //       );
+
+  //       // Return cleanup function to unsubscribe from listener
+  //       return () => unsubscribe();
+  //     } catch (error) {
+  //       console.error("Error setting up transaction listener:", error);
+  //       setLoading(false);
+  //     }
+  //   }, [user]);
+
+  useEffect(() => {
+    setLoading(true);
+    const q = query(
+      collection(db, TRANSACTION_COLLECTION),
+      orderBy("date", "desc")
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Transaction[] = [];
+      snapshot.forEach((doc) =>
+        data.push(convertToTransaction(doc.id, doc.data()))
+      );
+      console.log("Fetched transactions:", data);
+      setTransactions(data);
       setLoading(false);
     });
-
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   const refreshTransactions = () => {
     setLoading(true);
@@ -49,7 +106,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
   const value: TransactionContextType = {
     transactions,
     loading,
-    refreshTransactions
+    refreshTransactions,
   };
 
   return (

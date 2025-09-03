@@ -3,8 +3,8 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
-  padding: 0 0.5rem;
   margin-right: 4rem;
+  margin-top: 1rem;
 }
 
 .nav-title-container {
@@ -19,6 +19,7 @@
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+  padding-bottom: 1.5rem;
 }
 
 .create-btn {

@@ -214,6 +214,7 @@ export const getUserTransactions = (userId: string, callback: (transactions: any
     });
 };
 
+
 // Get transactions for a specific campaign
 export const getCampaignTransactions = (campaignId: string, callback: (transactions: any[]) => void) => {
     const transactionsRef = collection(db, TRANSACTION_COLLECTION);

@@ -27,6 +27,13 @@ export default function MyWallet() {
     return <ConnectWalletComponent />;
   }
 
+   // Filter transactions related to this campaign
+  const filteredTransactions = transactions.filter(
+    (tx) =>
+      user &&
+      (tx.user_id === user.wallet_address || tx.recipient_user_id === user.wallet_address)
+  );
+
   return (
     <div className="wallet-page">
       {/* Wallet Section */}
@@ -55,7 +62,7 @@ export default function MyWallet() {
       {/* Transaction Section */}
       <div className="transaction-section card">
         <h2 className="section-title">Transaction History</h2>
-        <TransactionView transactions={transactions} />
+        <TransactionView transactions={filteredTransactions} />
       </div>
     </div>
   );
