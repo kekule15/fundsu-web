@@ -70,26 +70,28 @@ export default function MyCampaigns() {
       {internalViewHistory.length === 0 && internalView === "list" && (
         <div className="my-campaigns-page">
           {/* Insights Section */}
-          <div className="insights-grid">
-            <div className="insight-card">
-              <h3>Total Campaigns</h3>
-              <p>{userCampaigns.length}</p>
-            </div>
-            <div className="insight-card">
-              <h3>Active Campaigns</h3>
-              <p>{activeCampaigns.length}</p>
-            </div>
-            <div className="insight-card">
-              <h3>Completed Campaigns</h3>
-              <p>{completedCampaigns.length}</p>
-            </div>
-            <div className="insight-card">
-              <h3>Total Raised</h3>
-              <p>{lamportsToSol(totalRaised)} SOL</p>
-            </div>
-            <div className="insight-card">
-              <h3>Your Contributions</h3>
-              <p>{lamportsToSol(user.total_contributions ?? 0)} SOL</p>
+          <div className="insights-section">
+            <div className="insights-grid">
+              <div className="insight-card">
+                <h3>Total Campaigns</h3>
+                <p>{userCampaigns.length}</p>
+              </div>
+              <div className="insight-card">
+                <h3>Active Campaigns</h3>
+                <p>{activeCampaigns.length}</p>
+              </div>
+              <div className="insight-card">
+                <h3>Completed Campaigns</h3>
+                <p>{completedCampaigns.length}</p>
+              </div>
+              <div className="insight-card">
+                <h3>Total Raised</h3>
+                <p>{lamportsToSol(totalRaised)} SOL</p>
+              </div>
+              <div className="insight-card">
+                <h3>Your Contributions</h3>
+                <p>{lamportsToSol(user.total_contributions ?? 0)} SOL</p>
+              </div>
             </div>
           </div>
 
@@ -116,7 +118,6 @@ export default function MyCampaigns() {
                       key={c.id}
                       onClick={async () => {
                         handleCampaignClick(c);
-                        
                       }}
                     >
                       <CampaignCard campaign={c} />

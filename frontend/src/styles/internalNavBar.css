@@ -1,7 +1,7 @@
 .internal-nav-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
   margin-bottom: 2rem;
   margin-right: 4rem;
   margin-top: 1rem;
@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: space-between;
   flex: 1;
+  min-width: 0; /* Helps flex shrink properly on smaller screens */
 }
 
 .internal-nav-title {
@@ -20,11 +21,14 @@
   color: #1f2937;
   margin: 0;
   padding-bottom: 1.5rem;
+  white-space: nowrap; /* Prevent wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Just in case content is too long */
 }
 
 .create-btn {
   padding: 0.6rem 1.2rem;
-  background-color: #10b981;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
   border-radius: 0.5rem;
   border: none;
@@ -32,11 +36,13 @@
   font-weight: 500;
   transition: background 0.2s ease, transform 0.2s ease;
   font-size: 0.95rem;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
 }
 
 .create-btn:hover {
-  background-color: #059669;
+   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   transform: translateY(-1px);
+   box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
 }
 
 .back-button {
@@ -52,7 +58,6 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  
 }
 
 .back-button:hover {
@@ -60,6 +65,7 @@
   color: #111827;
 }
 
+/* Tablet */
 @media (max-width: 768px) {
   .internal-nav-bar {
     margin-bottom: 1.5rem;
@@ -67,31 +73,34 @@
   }
 
   .internal-nav-title {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
   }
 
   .create-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
   }
 
   .back-button {
     padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 }
 
+/* Small Mobile */
 @media (max-width: 480px) {
-  .internal-nav-title {
-    font-size: 1.35rem;
-  }
-
   .internal-nav-bar {
     margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .internal-nav-title {
+    font-size: 1.2rem;
   }
 
   .create-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+    margin-bottom: 1.2rem;
   }
 }
