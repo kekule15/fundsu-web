@@ -50,7 +50,7 @@ export default function CreateWallet({ onConfirm }: CreateWalletProps) {
   return (
     <div className="create-wallet">
       <div className="warning-banner">
-        <h3>⚠️ Important Security Warning</h3>
+        <h3>Important Security Warning</h3>
         <p>
           Your seed phrase is the key to your wallet. Anyone with these words can access your funds.
           Never share it with anyone, and store it securely.
@@ -87,7 +87,7 @@ export default function CreateWallet({ onConfirm }: CreateWalletProps) {
             checked={hasSaved} 
             onChange={(e) => setHasSaved(e.target.checked)} 
           />
-          I have saved my seed phrase in a secure location
+           I have saved my seed phrase in a secure location
         </label>
       </div>
 

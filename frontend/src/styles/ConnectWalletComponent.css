@@ -51,8 +51,9 @@
 }
 
 .tab-button.active {
-  color: #14f195;
-  border-bottom-color: #14f195;
+  color: #6366f1;
+  border-bottom-color: #6366f1;
+  /* background: linear-gradient(135deg, #6366f1, #8b5cf6); */
 }
 
 .tab-button:hover:not(.active) {

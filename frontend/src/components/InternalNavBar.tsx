@@ -17,7 +17,7 @@ export function InternalNavBar() {
   const { user } = useAuth();
 
   // Don't show internal nav bar on Wallet page if in view mode
-  if (activeItem === SidebarPages.WALLET || activeItem === SidebarPages.PROFILE)
+  if (activeItem === SidebarPages.WALLET || activeItem === SidebarPages.PROFILE || !user)
     return null;
 
   return (
