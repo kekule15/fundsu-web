@@ -632,13 +632,13 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
 
   // Manual sync function
   const manualSync = async (): Promise<any> => {
-    console.error("Manual sync started...");
+    console.log("Manual sync started...");
     setSyncState(true);
     try {
       const result = await syncCampaignsWithFirebase();
       return result;
     } catch (error) {
-      console.error("Manual sync failed:", error);
+      console.log("Manual sync failed:", error);
       throw error;
     } finally {
       setSyncState(false);

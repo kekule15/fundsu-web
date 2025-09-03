@@ -7,8 +7,8 @@ import { defaultCampaignImage } from "@/utils/media_files";
 export function CampaignCard({ campaign }: { campaign: Campaign }) {
   const percent = (campaign.current_amount / campaign.target_amount) * 100;
   const truncatedDescription =
-    campaign.description.length > 120
-      ? campaign.description.substring(0, 120) + "..."
+    campaign.description.length > 50
+      ? campaign.description.substring(0, 50) + "..."
       : campaign.description;
 
   return (

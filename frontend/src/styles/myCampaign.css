@@ -2,13 +2,12 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  padding: 1rem;
-  margin-right: 4rem;
+  padding: 0rem;
 }
 
 .create-btn {
   padding: 0.6rem 1.2rem;
-  background-color: #10b981;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
   border-radius: 0.5rem;
   border: none;
@@ -18,7 +17,8 @@
 }
 
 .create-btn:hover {
-  background-color: #059669;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  /* background-color: #059669; */
 }
 
 /* Insights Grid */
@@ -32,7 +32,7 @@
   background: #f9fafb;
   border-radius: 0.75rem;
   padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   text-align: center;
 }
 
