@@ -23,6 +23,7 @@ export default function Profile() {
   const [editedUser, setEditedUser] = useState<UserProfile | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   // Initialize editedUser when user data is available
   useEffect(() => {
@@ -64,18 +65,19 @@ export default function Profile() {
 
     setIsSaving(true);
     try {
-      await updateUserProfile(editedUser).then(async () => {
-        console.log("Profile updated successfully");
-        setEditedUser({ ...editedUser });
-        await refreshInternalUser();
-      }).then(() => {
-        setIsEditing(false);
-      });
+      await updateUserProfile(editedUser)
+        .then(async () => {
+          console.log("Profile updated successfully");
+          setEditedUser({ ...editedUser });
+          await refreshInternalUser();
+        })
+        .then(() => {
+          setIsEditing(false);
+        });
     } catch (error) {
       console.error("Failed to update profile:", error);
       // Handle error (show message to user)
     } finally {
-
       setIsSaving(false);
     }
   };
@@ -127,6 +129,34 @@ export default function Profile() {
     const d = new Date(ms);
     return d.toLocaleString();
   };
+
+  const truncateAddress = (hash: string) => {
+    if (!hash) return "";
+    if (hash.length <= 16) return hash;
+    return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
+  };
+
+  const copyAddress = async (hash?: string) => {
+    if (!hash) return;
+    try {
+      if (navigator?.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(hash);
+      } else {
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = hash;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopiedAddress(hash);
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-header">
@@ -312,7 +342,19 @@ export default function Profile() {
           <div className="wallet-info">
             <div className="wallet-detail">
               <span className="detail-label">Wallet Address:</span>
-              <span className="wallet-address">{user.wallet_address}</span>
+              <div className="wallet-address-wrapper">
+                <span className="wallet-address" title={user.wallet_address}>
+                  {truncateAddress(user.wallet_address)}
+                </span>
+                <button
+                  type="button"
+                  className="copy-btn"
+                  onClick={() => copyAddress(user.wallet_address)}
+                  aria-label="Copy wallet address"
+                >
+                  {copiedAddress === user.wallet_address ? "Copied" : "Copy"}
+                </button>
+              </div>
             </div>
             <div className="wallet-detail">
               <span className="detail-label">Balance:</span>

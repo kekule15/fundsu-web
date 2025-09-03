@@ -22,7 +22,10 @@
   gap: 0.75rem;
 }
 
-.btn-primary, .btn-secondary, .btn-logout, .btn-cancel {
+.btn-primary,
+.btn-secondary,
+.btn-logout,
+.btn-cancel {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-weight: 600;
@@ -32,12 +35,12 @@
 }
 
 .btn-primary {
- background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
 }
 
 .btn-primary:hover {
-   background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
 }
 
 .btn-secondary {
@@ -191,10 +194,10 @@
 .detail-label {
   font-weight: 600;
   color: #4a5568;
-  
 }
 
-.detail-value, .detail-link {
+.detail-value,
+.detail-link {
   color: #2d3748;
 }
 
@@ -218,7 +221,8 @@
   color: #4a5568;
 }
 
-.form-group input, .form-group textarea {
+.form-group input,
+.form-group textarea {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #cbd5e0;
@@ -226,7 +230,8 @@
   font-family: inherit;
 }
 
-.form-group input:focus, .form-group textarea:focus {
+.form-group input:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
@@ -243,7 +248,7 @@
   min-height: 80px;
 }
 
-.wallet-info {
+/* .wallet-info {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -257,19 +262,57 @@
 }
 
 .wallet-address {
-  font-family: monospace;
-  background-color: #f7fafc;
-  padding-top: 0.5rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: inline-block;
 }
 
 .wallet-balance {
   font-weight: 600;
   color: #2d3748;
+} */
+
+
+.wallet-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.social-links, .social-links-edit {
+.wallet-address-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wallet-address {
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.copy-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: #e5e7eb;
+}
+
+
+
+.social-links,
+.social-links-edit {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -323,3 +366,4 @@
   font-size: 0.85rem;
   margin-top: 0.5rem;
 }
+
